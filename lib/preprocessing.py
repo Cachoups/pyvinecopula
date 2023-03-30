@@ -14,8 +14,7 @@ class PreProcessing:
   # var_types : list of "d", "c" to precise variables type
   # col_name : list of column names
   # d : number of dimension
-  def __init__(self, nb):
-    self.nb = nb
+  def __init__(self):
     self.df = None # Dataframe with n observation of dimension d
     self.df_ = None # Dataframe with n observation of dimension d + k where k are discrete variables
     self.var_types = [] # len(var_types) == len(col_name)
@@ -24,10 +23,10 @@ class PreProcessing:
 
   # Return a dataframe that reads self.nb files
   # This function can be ignore here it's dataset example
-  def read(self):
+  def read(self, n, prefix):
     df= []
-    for i in range(self.nb):
-      df.append(pd.read_csv(f"{i}.csv"))
+    for i in range(n):
+      df.append(pd.read_csv(f"{prefix}{i}.csv"))
     return pd.concat(df).reset_index().drop(columns = {"index"})
   
   # Return a dataframe with columns dropped (eventually columns = ["Unnamed: 0", "time"])
@@ -41,6 +40,8 @@ class PreProcessing:
   # Pseudo observation of the data and return a dataframe
 
   def pobs(self, data):
+      columns = data.columns
+      data = data.to_numpy()
       def F_j(data, t, j, n) :
         return (data[:,j] <= t).sum()/n
       n,d = data.shape
@@ -52,7 +53,9 @@ class PreProcessing:
           for j in range(d) :
               t = data[i,j]
               U[i,j] = n*F_j(data, t, j,n)/(n+1)
-      return pd.DataFrame(U)
+      U = pd.DataFrame(U)
+      U.columns = columns
+      return U
   
   # Remove column where std and coefficient of variation low and return a dataframe
   def remove_low_variation(self,data, std, coef_var):

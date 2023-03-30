@@ -18,7 +18,7 @@ class VinecopModel :
   # family_set : list of family (empty = all)
   # var_type : list of str ("d" or "c")
   
-  def __init__(self,d, var_type, num_threads, trunc_lvl = 0):
+  def __init__(self,d, var_types, num_threads, trunc_lvl = 0):
     self.model = pv.Vinecop(d)
     self.controls = None
     self.d = d
