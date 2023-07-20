@@ -305,6 +305,9 @@ class VinecopSearch:
         self.structure[0,d-1] = element[0]
         return 0
     
+    # This function only search the structure based on kendall tau without computing bicop for each pair
+    def search_structure(self, data):
+        
     # Return vine copula object from a pre define structure and pair copula
     def create_model(self):
         return pv.Vinecop(self.structure, self.pair_copula)
