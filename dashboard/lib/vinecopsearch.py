@@ -10,8 +10,6 @@ import os
 import concurrent.futures
 def read_paircopula(list_bicop, level):
     pair_copula = []
-    print(list_bicop)
-    print('ahh')
     if level == "all":
         if list_bicop != [] :
             t = len(list_bicop)
@@ -74,14 +72,11 @@ class VinecopSearch:
   # t_max : max int value for the tree
   # metric : "tau" or "mi"
   # bins : int for bins for "mi"
-  # dependance : dataframe with information abour pairs
     def __init__(self, d = 0, pair_copula = [], node_tree = [], couple_tree = [], weight = [],  metric_init = [], all_couple_init = [], structure = [], permutation = [], tree_indep = [],  metric = "tau", threshold = False, threshold_value = 0, level = 'all', bins = 1, t_max = 0, filename = ''):
         try : 
             self.read_json(filename)
         except :
             self.d = d
-            # self.order = np.array(range(1,d+1))
-            # self.controls = pv.FitControlsBicop(num_threads = 32)
             self.pair_copula = read_paircopula(pair_copula, level)
             self.node_tree = node_tree
             self.couple_tree = couple_tree
@@ -90,7 +85,6 @@ class VinecopSearch:
             self.bicop_init = []
             self.metric_init = metric_init
             self.all_couple_init = all_couple_init
-            # self.dependances = pd.DataFrame({"node_id_1" : [], "node_id_2" : [], "tree_lvl" : [], "weight" : [], 'conditionning_node_id' : [], "family" : [], "parameters" : [], 'var_types' : []})
             self.t_max = t_max
             self.metric = metric
             self.bins = bins
@@ -99,7 +93,6 @@ class VinecopSearch:
             self.level = level
             self.permutation = permutation
             self.tree_indep = tree_indep
-            # self.dependances = self.dependances.astype({'node_id_1': 'int32', 'node_id_2': 'int32', 'tree_lvl': 'int32', 'conditionning_node_id': 'object'})
         
     # Generate all possible pairs
     # There are (d-t)!/(2!(d-t-2)!) possibilities
@@ -320,9 +313,6 @@ class VinecopSearch:
                 edge = all_couple[rank]
             
                 tmp = list((set(diff) | set(edge)) - (set(diff) & set(edge)))
-                # if edge[0] in node_visited:
-                #     print("edge : ",edge)
-                #     edge[0:2] = np.flip(edge[0:2])
                 if (len(tmp) > 0) and (edge[0] not in node_visited) and (len(node_visited) <= self.d - t):
                     if threshold == True:
                         if (metrics[rank] != 0) or (level == "0"):
@@ -341,7 +331,6 @@ class VinecopSearch:
                         i+=1
                 else :
                     del tree[i]
-                    # i+=1
             except :
                 condition = False
             
@@ -362,12 +351,10 @@ class VinecopSearch:
             else :
                 condition = condition and (len(tree_couple) < self.d-t-1) 
         tree = tree[:self.d-t]
-        # print(tree)
         return tree, tree_couple, idx_couple
     
     def fill_tree_indep(self, tree_couple):
         tree_couple = tree_couple.tolist()
-        print(tree_couple)
         tree_indep = [[tree_couple[0][0], tree_couple[0][1]]]
         del tree_couple[0]
         i = 0
@@ -401,28 +388,16 @@ class VinecopSearch:
                     except :
                         condition_tree = False
         self.tree_indep = tree_indep
+        
     # Fill permutation matrix
     def fill_permutation(self, t, tree_couple):
-        # print("fill permutation", t , len(tree_couple), self.d -t - 1)
         for e in range(len(tree_couple)):
             if t == 0:
                 couple = tree_couple[e]
                 self.permutation[couple[0] - 1, t] = couple[1]
             else :
-                # def aux(tree_couple, e, t):
-                #     i = 0
-                #     idx = []
-                #     for couple in tree_couple:
-                #         if couple[0] == e + 1 and set(self.permutation[e, 0:t]).issubset(set(couple[2:])):
-                #             idx.append(i)
-                #         i+= 1
-                #     return idx
-                # idx = aux(tree_couple,e,t)
                 couple = tree_couple[e]
-                # idx = np.where(tree_couple[:,0] == e+1)[0]
                 try :
-                    # print(tree_couple[idx][0])
-                    # couple = tree_couple[idx][0]
                     self.permutation[couple[0] -1, t] = couple[1]
                 except : 
                     None
@@ -435,40 +410,15 @@ class VinecopSearch:
                 couple = tree_couple[e]
                 self.structure[self.d - 1 - e, e] = couple[0]
                 self.structure[t, e] = couple[1]
-                # for i in range(t-1):
-                #     self.structure[i,e] = couple[2+t-1-i]
             except:
                 continue
     
-    # def fill_adjacency_matrix(self, t, tree_couple, metrics):
-    #     d = self.d
-    #     matrix = np.zeros((d,d))
-    #     for i in range(len(tree_couple)):
-    #         edge = tree_couple[i]
-    #         print(edge)
-    #         a = edge[0]
-    #         b = edge[1]
-    #         matrix[a-1, b-1] = metrics[i]
-    #     self.adjacency_matrix.append(matrix)
         
     # Perform a threshold onchosen metric values for each pair
     def threshold_(self, value) :
         for i in range(len(self.metric_init)) :
             if abs(self.metric_init[i]) <= value :
                 self.metric_init[i] = 0
-        return 0
-    
-    # Fill self.dependances
-    def fill_dependances(self, t, tree_couple, metrics, pairs = [], bicop = True):
-        for i in range(len(tree_couple)):
-            node = tree_couple[i]
-            to_add =  {'node_id_1': node[0],'node_id_2' : node[1], 'tree_lvl' : t, 'weight' : metrics[i], 'conditionning_node_id' : node[2:].tolist()}
-            # print(to_add)
-            if bicop :
-                to_add = to_add | {'family' : pairs[i].family, 'parameters' : pairs[i].parameters, 'var_types' : pairs[i].var_types}
-            else :
-                to_add = to_add | {'family' : 'None', 'parameters' : 'None', 'var_types' : 'None'}
-            self.dependances = pd.concat([self.dependances, pd.DataFrame(to_add)], ignore_index=True)
         return 0
     
     
@@ -479,9 +429,6 @@ class VinecopSearch:
         t = 0
         all_couple = np.array(self.pairs(t))
     
-        # all_couple, pairs = self.bicop(t, all_couple, data)
-        # # all_couple, pairs = self.bicop_(t, None, None, all_couple, data)
-        # tau = self.tau(pairs)
         metrics = np.array(self.all_metric(all_couple, data, metric, bins))
         if threshold == True:
             tmp = self.metric_init.copy()
@@ -496,15 +443,7 @@ class VinecopSearch:
             pairs = self.bicop__(tree_couple, data)
         else :
             pairs = []
-        # Define order variable
-        # order = np.concatenate(tree_couple)
-        # _, idx = np.unique(order, return_index=True)
-        # order = order[np.sort(idx)]
-        # self.order = order
-        
-        
-        # Reorder our couples
-        # tree_couple = self.reorder_tree_couple(tree_couple)
+
         order_tree = sorted(range(len(tree_couple)), key=lambda k: tree_couple[k][0])
         if bicop and (level != '0') :
             pairs = np.array(pairs)[order_tree]
@@ -520,18 +459,13 @@ class VinecopSearch:
         if (threshold == False):
             # Fill structure with first tree
             self.fill_structure(t,tree_couple)
-        # self.fill_adjacency_matrix(t, tree_couple, tau[tree])
-        # tree_couple = np.array(tree_couple)[order_tree]
-        
-        # fill dependances
-        # self.fill_dependances(t, tree_couple, tau[tree], pairs, bicop)
+
         self.fill_permutation(t, tree_couple)
         self.couple_tree.append(np.array(idx_couple)[order_tree].tolist())
         self.node_tree.append(tree_couple.tolist())
         self.weight.append(metrics[tree])
         
-        # if (level == "0") and (threshold == True):
-        #     self.metric_init = tmp
+
         return tree_couple
         
     # Define construction of tree above lvl 1
@@ -539,10 +473,8 @@ class VinecopSearch:
         all_couple = self.pairs(t)
         all_couple, idx_all_couple = self.all_couple(t, tree_couple, all_couple)
         all_couple = np.array(all_couple, dtype=object)
-        # all_couple, pairs = self.bicop(t, all_couple,data)
-        # # all_couple, pairs = self.bicop_(t, self.pair_copula[t-1], tree_couple, all_couple,data)
-        # tau = self.tau(pairs)
-        # tree = np.argsort(-np.abs(tau))
+        if len(all_couple) == 0:
+            return []
         all_couple_init = np.array(self.all_couple_init)
         metrics = np.array(self.metric_init)[np.array([np.where( (all_couple_init[:,0] == all_couple[i][0]) & (all_couple_init[:,1]== all_couple[i][1]))[0][0] for i in range(len(all_couple)) ])]
         tree = np.argsort(-np.abs(metrics))
@@ -566,10 +498,6 @@ class VinecopSearch:
             # Fill structure with first tree
             self.fill_structure(t,tree_couple)
 
-        # self.fill_adjacency_matrix(t, tree_couple, tau[tree])
-        
-        # fill dependances
-        # self.fill_dependances(t, tree_couple, tau[tree], pairs, bicop)
         self.fill_permutation(t, tree_couple)
         self.couple_tree.append(np.array(idx_couple)[order_tree].tolist())
         self.node_tree.append(tree_couple.tolist())
@@ -579,7 +507,6 @@ class VinecopSearch:
     def reset(self, metric, bins, level, threshold, threshold_value):
         d = self.d
         self.order = np.array(range(1,d+1))
-        # self.controls = pv.FitControlsBicop(num_threads = 32)
         self.pair_copula = []
         self.structure = np.zeros((d,d))
         self.bicop_init = []
@@ -655,7 +582,6 @@ class VinecopSearch:
         model = json.load(open(filename))
         self.VinecopSearchDecoder(model)
     def VinecopSearchDecoder(self, obj):
-        # return VinecopSearch(obj['d'], obj["pair_copula"], obj["node_tree"], obj['couple_tree'], obj['weight'], obj['metric_init'], obj['all_couple_init'], obj['permutation'],  obj['metric'], obj['bins'], obj['t_max'])
         self.d = obj['d']
         self.pair_copula = read_paircopula(obj["pair_copula"], obj['level'])
         self.node_tree = obj["node_tree"]
@@ -719,7 +645,6 @@ class VinecopSearch:
             d = self.d
             u = np.random.uniform(0,1,(n,d))
             def aux_tree_indep(i):
-                print(i)
                 vinecop = pv.Vinecop(np.array(self.structure[i]), self.pair_copula[i])
                 simulated_data = vinecop.simulate(n)
                 tree_indep[i].sort()
@@ -766,11 +691,7 @@ class VinecopSearch:
             u[:,d-1] = w[:,d-1]
             v[d-1,d-1,:] = w[:,d-1]
             zeros = np.zeros(n)
-            print(d-1,d-1, v[d-1,d-1,:])
-            # for j in range(d-1):
-            #             A[d-1,j,:] = w[:,d-1]
-            #             B[d-1,j,:] = w[:,d-1]
-            #             v[d-1,j,:] =  w[:,d-1]
+
             for i in range(1,d):
                 try :
                     M = self.permutation[d-i-1,:]-1
@@ -782,98 +703,50 @@ class VinecopSearch:
                     m = min(i,n_)
                     i_ = d - i - 1
                     v[i_, M[n_-1],:] = w[:,i_]
-                    # v[i, M] = w[i]
                     A[i_,d-1 -abs(i-n_),:] = w[:,i_]
-                    # print('columns aaa :',d-i, M )
-                    #print("w = ", w[:,i_])
+
                     for j in range(1,n_+1):
                         j_ = d - j - abs(i-n_) - 1
-                        #j_ = d - j  -1
+
                         node_tree = np.array(self.node_tree[n_ - j])
                         pair_copula = np.array(self.pair_copula[n_ - j])
                         idx = np.where( (node_tree[:,0] == d-i) & (node_tree[:,1] == M[n_-j]+1) )
                         bicop = pair_copula[idx[0]][0]
-                        # print(i,j, M, node_tree[idx[0]][0])
+
                         try : 
-                            # if v[i_+1,M[n-j],:] == 0 :
-                            #     v[i_,M[n-j-1],:]= bicop.hinv1(np.vstack((v[M[n-j],M[n-j],:], A[i_,j_+1,:])).T )
-                            #     A[i_,j_,:] = v[i_,M[n-j-1],:]
-                            # else :
-                            #     v[i_,M[n-j-1],:]= bicop.hinv1(np.vstack((v[i_+1,M[n-j],:], A[i_,j_+1,:])).T )
-                            #     A[i_,j_,:] = v[i_,M[n-j-1],:]
                             idx = np.where((v[i_+1:,M[n_-j],:] != zeros).all(axis =1))[0][0]
-                            #print("idx",np.where((v[i_+1:,M[n-j],:] != np.zeros(n)).all(axis =1))  )
                             value = v[i_+1:, M[n_-j],:][idx]
-                            v[i_,M[n_-j-1],:]= bicop.hinv1(np.vstack((value, A[i_,j_+1,:])).T )
-                            
-                            #v[i_,M[n_-j-1],:]= mc_integrate(hinv1, bicop, 0, value, A[i_,j_+1,:],  n, 10000)/value
-                            
+                            v[i_,M[n_-j-1],:]= bicop.hinv1(np.vstack((value, A[i_,j_+1,:])).T )               
                             A[i_,j_,:] = v[i_,M[n_-j-1],:]
-                            #print("aaaa", A[i_,j_,:], "i,j", i_,j_+1, "prev", A[i_,j_+1,:], "value", value, i_+1 + idx)
+
                         except :
                             value = v[i_+1:, M[n_-j],:][np.where((v[i_+1:,M[n_-j],:] != zeros).all(axis =1))[0][0]]
                             A[i_,j_,:] = bicop.hinv1(np.vstack((value, A[i_,j_+1 ,:])).T)
                             
-                            #A[i_,j_,:] = mc_integrate(hinv1, bicop, 0, value, A[i_,j_+1,:],  n, 10000)/value
-                          
-                        #print(i_,j_, "a", A[i_,j_,:] )
                     u[:,i_] = A[i_,i_,:]
                     v[i_,i_,:] = A[i_,i_,:]
                     B[i_,i_,:] = A[i_,i_,:]
-                    # print("bbbbbaaaa", B[i_,i_,:])
+                    
                     for j in range(n_-1, -1, -1):
                         j_ = d - j - abs(i- n_) -1
-                        # j_ = d - j  -1
-                        #print('j', j,  i_,j_, "i,n",i,n)
                         node_tree = np.array(self.node_tree[n_ - j - 1])
                         pair_copula = np.array(self.pair_copula[n_ - j - 1])
                         idx = np.where( (node_tree[:,0] == d-i) & (node_tree[:,1] == M[n_-j-1]+1) )
                         bicop = pair_copula[idx[0]][0]
-                        #print(i,j, M, node_tree[idx[0]][0])
                         try :
-                            #print("bicop", bicop)
                             idx = np.where((v[M[n_-j-1], i_+1:,:] != zeros).all(axis =1))[0][0]
-                            # print("idx",np.where((v[M[n-j-1], i_+1:,:] != zeros).all(axis =1)) )
                             value = v[M[n_-j-1],i_+1:,:][idx]
                             v[M[n_-j-1],i_,:] = bicop.hfunc2(np.vstack((value, B[i_,j_ - 1,:])).T)
-            
-                            #v[M[n_-j-1],i_,:] = mc_integrate(hfunc2, bicop, 0, B[i_,j_ - 1,:],  value, n, 10000)*B[i_,j_ - 1,:]
-
                             B[i_,j_,:] = v[M[n_-j-1],i_,:]
-                            # print('v',M[m-1-j], i_, v[M[n-j-1],i_,:], 'input', value, B[i_,j_ - 1,:], M[n-j-1], i_+1 + idx, "b", i_,j_-1, "v", v[M[n-j-1],i_+1:,:])
                         except :
                             value = v[M[n_-j-1], i_+1:,:][np.where((v[M[n_-j-1], i_+1:,:] != zeros).all(axis =1))[0][0]]
                             B[i_,j_,:] = bicop.hfunc2(np.vstack((value, B[i_,j_ - 1,:])).T)
-                            # B[i_,j_,:] = mc_integrate(hfunc2, bicop, 0, B[i_,j_ - 1,:], value, n, 10000)*B[i_,j_ - 1,:]
-
-                            #print('b',i_, j_, B[i_,j_,:])
-                        # try :
-                        #     #print("bicop", bicop)
-                        #     idx = np.where((v[i_+1:,M[n-j-1],:] != zeros).all(axis =1))[0][0]
-                        #     #print("idx",np.where((v[i_+1:,M[n-j-1],:] != zeros).all(axis =1)) )
-                        #     value = v[i_+1:,M[n-j-1],:][idx]
-                        #     v[i_, M[n-j-1],:] = bicop.hfunc2(np.vstack((value, B[i_,j_ - 1,:])).T)
-                        #     B[i_,j_,:] = v[i_,M[n-j-1]]
-                        #     # print('v',M[m-1-j], i_, v[i_, M[n-j-1],:], 'input', value, B[i_,j_ - 1,:], M[n-j-1], i_+1 + idx, "b", i_,j_-1, "v", v[i_+1:,M[n-j-1],:])
-                        # except :
-                        #     value = v[i_+1:,M[n-j-1],:][np.where((v[i_+1:,M[n-j-1],:] != zeros).all(axis =1))[0][0]]
-                        #     B[i_,j_,:] = bicop.hfunc2(np.vstack((value, B[i_,j_ - 1,:])).T)
-                        #     #print('b',i_, j_, B[i_,j_,:])
-                    #print("u",u)
-                    
-                    # print("v", v)
-                    # print('a',A)
-                    # print("b",B)
+    
                 except:
-                    print("columns", d-i-1+1)
                     u[:,d-i-1] = w[:,d-i-1]
                     v[d-i-1,d-i-1,:] =  w[:,d-i-1]
                     A[d-i-1,d-1,:] = w[:,d-i-1]
                     B[d-i-1,d-1,:] = w[:,d-i-1]
-                    # for j in range(d-i):
-                    #     A[d-i-1,j,:] = w[:,d-i-1]
-                    #     B[d-i-1,j,:] = w[:,d-i-1]
-                    #     v[d-i-1,j,:] =  w[:,d-i-1]
         return u 
 
 ### FUNCTIONS outside previous class
@@ -927,12 +800,6 @@ def u_to_m(F,X ,U):
     
     n,d = U.shape
     M = U.copy()
-    # for i in range(n) :
-    #       for j in range(d) :
-    #           value = find_nearest(F[:,j], (n+1)/n*U[i,j])
-    #           idx = np.where(F[:,j] == value)[0]
-    #           random = np.random.randint(0, len(idx), size = 1)[0]
-    #           M[i,j] = X[idx[random], j]
     for i in range(n) :
           for j in range(d) :
                 x= X[:,j]
@@ -1013,7 +880,6 @@ def plot_structure(model, t):
             a.append(a_node)
             b.append(b_node)
             c.append(round(weight[i],2))
-            # c.append(weight[predecesor-1, sucessor-1])
     structure_df = pd.DataFrame({"a" : a, "b" : b})
    
     paths = structure_df.loc[:,'a':].stack().groupby(level=0).agg(list).values.tolist()

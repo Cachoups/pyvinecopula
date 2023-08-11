@@ -2,7 +2,6 @@ import numpy as np
 from math import log
 from sklearn.neighbors import NearestNeighbors
 import sklearn
-import pyvinecopulib as py
 
 def calc_MI(x, y, bins):
     c_xy = np.histogram2d(x, y, bins)[0]
@@ -19,40 +18,6 @@ def mutual_info_pairs(data, bins):
         for jx in np.arange(ix+1,n):
             matMI[ix,jx] = calc_MI(data[:,ix], data[:,jx], bins)
     return matMI
-
-def mutual_info_level_(vinecopsearch):
-    try : 
-        dim = vinecopsearch.d
-    except :
-        dim=2
-    def mc_integrate(func, a, b,level, n = 1000):
-        # Monte Carlo integration of given function over domain from a to b (for each parameter)
-        # dim: dimensions of function
-        c_t = np.ones(n)
-        if level == "0":
-            tree_indep_list = vinecopsearch.tree_indep
-            for i in range(0,len(tree_indep_list)):
-                d = len(tree_indep_list[i])
-                x_list = np.random.uniform(a, b, (n, d))
-                c =  func(vinecopsearch.pair_copula[i], vinecopsearch.structure[i], x_list)
-                c_t *=  c
-                idx = np.where((c_t==0))
-                res = c_t*np.log(c_t)
-                res[idx] = 0 # handling log(0) value
-                res[np.argwhere(np.isnan(res))] = 0 #handling nan value
-        
-        domain = np.power(b-a, dim)
-        integ = domain * res.sum()/dim
-            
-        return integ
-    def func1(pair_copula, structure, x) :
-        sub_model = pv.Vinecop(structure, pair_copula)
-        c = sub_model.pdf(x)
-        return c
-    
-    level = vinecopsearch.level
-        
-    return mc_integrate(func1, 0, 1, level, 100000)
 
 def mutual_info(vinecop):
     def mc_integrate(func, a, b, dim, n = 1000):
@@ -73,7 +38,7 @@ def mutual_info(vinecop):
         d=2
     def func1(x) :
         c = vinecop.pdf(x)
-        idx = np.where(c==0)
+        idx = np.where(c<=10**(-10))
         res = c*np.log(c)
         res[idx] = 0
         return res

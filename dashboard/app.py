@@ -1070,15 +1070,16 @@ def update_tab_1(n_clicks, contents_csv, filename_csv, contents_model, filename_
             try :
                 vmodel = pv.Vinecop("./output/model_upload.json")
                 dim = vmodel.dim
+                print("here")
             except :
                 vmodel = VinecopSearch(filename = "./output/model_upload.json")
                 dim = vmodel.d
-            try :
-                vmodel = pv.Vinecop(vmodel.structure, vmodel.pair_copula)
-                dim = vmodel.dim
-            except :
-                vmodel = VinecopSearch(filename = "./output/model_upload.json")
-                dim = vmodel.d
+                try :
+                    vmodel = pv.Vinecop(vmodel.structure, vmodel.pair_copula)
+                    dim = vmodel.dim
+                except :
+                    vmodel = VinecopSearch(filename = "./output/model_upload.json")
+                    dim = vmodel.d
             
             if dim != len(pseudo_obs.columns):
                 print(dim)

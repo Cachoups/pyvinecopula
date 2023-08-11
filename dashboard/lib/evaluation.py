@@ -41,8 +41,8 @@ def count_similar_variables(data1, data2, threshold = 0.05):
         var1 = data1[column]
         var2 = data2[column]
         _, p_value = ks_2samp(var1, var2)
-        if p_value <= threshold:
-            count += 1
+        if p_value >= threshold:
+            count +=1
 
     return count
 

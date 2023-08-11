@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-from datetime import datetime
 
 class PreProcessing:
 
@@ -40,13 +39,12 @@ class PreProcessing:
   
   # Convert date time into 3 separate variables month, day and hours in second
   def convert_time(self, data, col_time) :
-    time = data[col_time]
+    time = pd.to_datetime(data[col_time])
     data['day']=time.dt.day
     data['month'] = time.dt.month
-    data['time_in_sec'] = time.hour*3600 + time.minute*60 + time.second
+    data['time_in_sec'] = time.dt.hour*3600 + time.dt.minute*60 + time.dt.second
     return data
-    
-    
+  
   # Pseudo observation of the data and return a dataframe
 
   def pobs(self, data):

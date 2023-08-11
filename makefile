@@ -1,4 +1,4 @@
 setup: requirements.txt
 		pip install -r requirements.txt
-run:
-		python main.py
+clear:
+		rm output/*
