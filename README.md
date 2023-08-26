@@ -19,7 +19,10 @@ Any datasets are handle with the pre processing part.
 You can find the whole walthrough in the notebook
 
 If you want to use the dashboard application, you need to install the dash packagen go to the folder dashboard and use the following command
+
 `python app.py`
+
+You can check the 'Manual.pdf' to know how to use the application.
 
 ## References
 
